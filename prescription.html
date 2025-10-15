@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prescription Pad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+:root {
+  --primary: #3c5754;
+  --secondary: #46a0fa;
+  --success: #28a745;
+  --danger: #e82034;
+  --warning: #ffc107;
+  --info: #4895ef;
+  --light: #f8f9fa;
+  --dark: #212529;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #e1e3e4;
+  margin: 0;
+  padding: 20px;
+  color: var(--dark);
+}
+
+header {
+  background: var(--primary);
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: clamp(1.4rem, 2.5vw, 1.75rem);
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.toolbar button {
+  background: var(--secondary);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s ease;
+}
+
+.toolbar button:hover {
+  background: #1d7ed6;
+}
+
+.prescription {
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  background: white;
+}
+
+.hospital-header {
+  text-align: center;
+}
+.hospital-header1 {
+  text-align: right;
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
+
+.hospital-header h2 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 1.6rem;
+}
+
+.hospital-header p,
+.hospital-header1 p {
+  margin: 4px 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.patient-info {
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+.patient-info strong { color: var(--primary); }
+.patient-info select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-left: 8px;
+}
+
+.prescribed {
+  margin-top: 50px;
+  text-align: right;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
+.store {
+  margin-top: 50px;
+  text-align: center;
+}
+
+/* Medicine list */
+.medicines-header {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1fr;
+  font-weight: bold;
+  margin-bottom: 8px;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 4px;
+}
+.medicines-header span {
+  text-align: center;
+}
+
+.medicine-row {
+  display: grid;
+  grid-template-columns: 0.3fr 2.7fr 1fr 1fr;
+  align-items: center;
+  margin-bottom: 10px;
+  text-align: left;
+  gap: 8px;
+}
+
+.medicine-row label {
+  text-align: right;
+  font-weight: bold;
+}
+
+.medicine-row input[type="text"] {
+  padding: 6px 8px;
+  border: none;
+  border-bottom: 1px solid #aaa;
+  font-size: 1.1rem;
+}
+
+.medicine-row input.qty,
+.medicine-row input.times {
+  text-align: center;
+}
+
+.medicineAdvice {
+  margin-top: 20px;
+}
+.medicineAdvice textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-bottom: 1px solid #aaa;
+  font-size: 1.1rem;
+  resize: none;
+  height: 80px;
+}
+
+/* Printing cleanup */
+@page {
+  margin: 20mm;
+}
+@media print {
+  body {
+    background: white;
+    padding: 0;
+    margin: 0;
+  }
+  header,
+  .toolbar,
+  .admin-nav,
+  .footer {
+    display: none !important;
+  }
+  .container {
+    box-shadow: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+  }
+  .prescription {
+    border: none;
+    padding: 0;
+  }
+  .medicine-row input {
+    border: none !important;
+  }
+  .medicine-row {
+    grid-template-columns: 0.3fr 2.7fr 1fr 1fr; /* keeps alignment on print */
+  }
+  .patient-info select {
+    border: none;
+    background: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    pointer-events: none;
+  }
+  select#patientSelect {
+    font-weight: bold;
+    color: black;
+  }
+}
+
+/* Navbar */
+.admin-nav {
+  background: var(--primary);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+.nav-logo { font-weight: 700; font-size: 1.5rem; }
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 18px;
+}
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.nav-links a:hover {
+  background: rgba(255,255,255,0.15);
+}
+.nav-links a.active {
+  color: #FFD166;
+  font-weight: 700;
+}
+.nav-toggle {
+  display: none;
+  font-size: 1.4rem;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+@media (max-width: 768px) {
+  .nav-links {
+    position: absolute;
+    top: 56px;
+    right: 0;
+    background: var(--primary);
+    flex-direction: column;
+    width: 200px;
+    padding: 10px;
+    display: none;
+  }
+  .nav-links.show { display: flex; }
+  .nav-toggle { display: block; }
+}
+
+.footer {
+  background: #f9f9f9;
+  color: #000000;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 0.97rem;
+  font-weight: 450;
+  border-top: 1px solid #ddd;
+}
+.footer a {
+  color: #FF6400;
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+
+<nav class="admin-nav">
+  <div class="nav-container">
+    <div class="nav-logo">Dr. Shaikh Hospital</div>
+    <button class="nav-toggle" id="navToggle">☰</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Reception</a></li>
+      <li><a href="prescription.html" class="active">Prescription Pad</a></li>
+      <li><a href="doc-dashboard.html">Doctor Dashboard</a></li>
+      <li><a href="analytics.html">Analytics</a></li>
+    </ul>
+  </div>
+</nav>
+
+<body>
+  <script type="module" src="auth-guard.js"></script>
+
+  <header>Doctor's Prescription Panel</header>
+
+  <div class="container">
+    <div class="toolbar">
+      <button onclick="printPrescription()">Print Prescription</button>
+    </div>
+
+    <div id="prescriptionArea" class="prescription">
+      <div class="hospital-header">
+        <h2>Shaikh Clinic</h2>
+        <p>CTS No 12034, CIDO Rd., Kiradpura, Aurangabad • Phone: 8668358768</p>
+      </div>
+      <div class="hospital-header1">
+        <p>Reg. No |-36262-A1</p>
+        <p>Dr.Najmus Saher. B.H.M.S.</p>
+        <p>Reg. No 30645</p>
+      </div>
+
+      <div class="patient-info">
+        <p><strong>Patient:</strong>
+          <select id="patientSelect"><option>Loading...</option></select>
+        </p>
+        <p><strong>Date:</strong> <span id="prescriptionDate"></span></p>
+      </div>
+
+      <div class="medicines-header">
+        <span>Medicines</span>
+        <span>Qty</span>
+        <span>Time(s)</span>
+        
+      </div>
+
+      <div id="medicineFields">
+        <div class="medicine-row">
+          <label>1.</label>
+          <input type="text" placeholder="Medicine name..." />
+          <input type="text" class="qty" placeholder="Qty" />
+          <input type="text" class="times" placeholder="times" />
+        </div>
+        <div class="medicine-row">
+          <label>2.</label>
+          <input type="text" placeholder="Medicine name..." />
+          <input type="text" class="qty" placeholder="Qty" />
+          <input type="text" class="times" placeholder="times" />
+        </div>
+        <div class="medicine-row">
+          <label>3.</label>
+          <input type="text" placeholder="Medicine name..." />
+          <input type="text" class="qty" placeholder="Qty" />
+          <input type="text" class="times" placeholder="times" />
+        </div>
+        <div class="medicine-row">
+          <label>4.</label>
+          <input type="text" placeholder="Medicine name..." />
+          <input type="text" class="qty" placeholder="Qty" />
+          <input type="text" class="times" placeholder="times" />
+        </div>
+        <div class="medicine-row">
+          <label>5.</label>
+          <input type="text" placeholder="Medicine name..." />
+          <input type="text" class="qty" placeholder="Qty" />
+          <input type="text" class="times" placeholder="times" />
+        </div>
+        <div class="medicine-row">
+          <label>6.</label>
+          <input type="text" placeholder="Medicine name..." />
+          <input type="text" class="qty" placeholder="Qty" />
+          <input type="text" class="times" placeholder="times" />
+        </div>
+        <div class="medicine-row">
+          <label>7.</label>
+          <input type="text" placeholder="Medicine name..." />
+          <input type="text" class="qty" placeholder="Qty" />
+          <input type="text" class="times" placeholder="times" />
+        </div>
+        <div class="medicine-row">
+          <label>8.</label>
+          <input type="text" placeholder="Medicine name..." />
+          <input type="text" class="qty" placeholder="Qty" />
+          <input type="text" class="times" placeholder="times" />
+        </div>
+      </div>
+
+
+      <div class="medicineAdvice" id="adviceSection">
+        <p><strong>Advice:</strong></p>
+        <textarea id="adviceText" placeholder="Enter advice here..."></textarea>
+      </div>
+
+      <div class="prescribed">
+        <p><strong>Prescribed by Dr. Faheem Shaikh (B.A.M.S., L.L.B.)</strong></p>
+      </div>
+
+      <div class="store">
+        <p><strong>SHAIKH MEDICAL STORE</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from "./firebase-config.js";
+    import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const patientSelect = document.getElementById("patientSelect");
+    const adviceSection = document.getElementById("adviceSection");
+    const adviceText = document.getElementById("adviceText");
+
+    function loadActivePatients() {
+      const q = query(collection(db, "patients"), where("status", "==", "active"));
+      onSnapshot(q, (snapshot) => {
+        patientSelect.innerHTML = "";
+        if (snapshot.empty) {
+          patientSelect.innerHTML = "<option>No Active Patients</option>";
+          return;
+        }
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          const opt = document.createElement("option");
+          opt.value = doc.id;
+          opt.textContent = data.name;
+          patientSelect.appendChild(opt);
+        });
+      });
+    }
+    loadActivePatients();
+
+    document.getElementById("prescriptionDate").innerText = new Date().toLocaleDateString();
+
+    window.printPrescription = function () {
+      const rows = document.querySelectorAll(".medicine-row");
+      rows.forEach(row => {
+        const med = row.querySelector("input[type='text']").value.trim();
+        const qty = row.querySelector(".qty").value.trim();
+        if (!med && !qty) row.style.display = "none";
+      });
+
+      // Hide advice if empty
+      if (!adviceText.value.trim()) {
+        adviceSection.style.display = "none";
+      }
+
+      window.print();
+
+      // Reset
+      rows.forEach(row => row.style.display = "grid");
+      adviceSection.style.display = "block";
+    };
+
+    document.getElementById("navToggle").onclick = () => {
+      document.getElementById("navLinks").classList.toggle("show");
+    };
+  </script>
+
+  <footer class="footer">
+    <p>
+      Developed by 
+      <a href="https://unrealsolutions.pages.dev" target="_blank">UnrealSolutions</a> 
+      | Contact: <a href="mailto:info.unrealsolutions@gmail.com">info.unrealsolutions@gmail.com</a> 
+      | +91-7507374446 | +91-9529102559
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Analytics Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    :root {
+      --primary: #3c5754;
+      --secondary: #46a0fa;
+      --success: #28a745;
+      --danger: #e82034;
+      --warning: #ffc107;
+      --info: #4895ef;
+      --light: #f8f9fa;
+      --dark: #212529;
+    }
+
+    body { 
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #e1e3e4;
+      margin: 0;
+      padding: 20px;
+      color: #334155;
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 1.75rem;
+      font-weight: bold;
+      height: 60px;
+      margin-bottom: 30px;
+    }
+
+    .charts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 25px;
+    }
+
+    .card { 
+      background: white; 
+      padding: 25px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1),
+                  0 2px 4px -1px rgba(0,0,0,0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1),
+                  0 4px 6px -2px rgba(0,0,0,0.05);
+    }
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: var(--dark);
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    canvas { width: 100% !important; height: 300px !important; }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .chart-row { grid-template-columns: 1fr; }
+      .card { padding: 20px; }
+    }
+    @media (max-width: 640px) {
+      .charts-container { gap: 20px; }
+      .card { padding: 15px; }
+      header { font-size: 1.4rem; }
+      .card h3 { font-size: 1.1rem; margin-bottom: 15px; }
+    }
+
+    /* Navigation bar */
+    .admin-nav {
+      background: var(--primary);
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+    }
+    .nav-logo { font-weight: 700; font-size: 1.5rem; }
+    .nav-links { list-style: none; display: flex; gap: 18px; }
+    .nav-links a {
+      color: white; text-decoration: none;
+      font-weight: 500; padding: 6px 10px;
+      border-radius: 6px; transition: background 0.2s;
+    }
+    .nav-links a:hover { background: rgba(255,255,255,0.15); }
+    .nav-links a.active { color: #FFD166; font-weight: 700; }
+    .nav-toggle { display: none; font-size: 1.4rem; background: none; border: none; color: white; cursor: pointer; }
+    @media (max-width: 768px) {
+      .nav-links {
+        position: absolute; top: 56px; right: 0;
+        background: var(--primary); flex-direction: column;
+        width: 200px; padding: 10px; display: none;
+      }
+      .nav-links.show { display: flex; }
+      .nav-toggle { display: block; }
+    }
+
+    .footer {
+      background: #f9f9f9;
+      color: #000000;
+      text-align: center;
+      padding: 10px 16px;
+      font-size: 0.97rem;
+      font-weight: 450;
+      border-top: 1px solid #ddd;
+    }
+    .footer a {
+      color: #FF6400;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <nav class="admin-nav">
+    <div class="nav-container">
+      <div class="nav-logo">Dr. Shaikh Hospital</div>
+      <button class="nav-toggle" id="navToggle">☰</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Reception</a></li>
+        <li><a href="prescription.html">Prescription Pad</a></li>
+        <li><a href="doc-dashboard.html">Doctor Dashboard</a></li>
+        <li><a href="analytics.html" class="active">Analytics</a></li>
+      </ul>
+    </div>
+  </nav>
+</head>
+
+<body>
+  <script type="module" src="auth-guard.js"></script>
+  <header>Analytics Dashboard</header>
+
+  <div class="charts-container">
+    <div class="chart-row">
+      <div class="card">
+        <h3>Revenue Trend (Last 7 Days)</h3>
+        <canvas id="revenueTrendChart"></canvas>
+      </div>
+      <div class="card">
+        <h3>Daily Patients (Last 7 Days)</h3>
+        <canvas id="dailyPatientsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <div class="card">
+        <h3>Monthly Revenue (Last 6 Months)</h3>
+        <canvas id="monthlyRevenueChart"></canvas>
+      </div>
+      <div class="card">
+        <h3>Monthly Patient Trend</h3>
+        <canvas id="monthlyPatientsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <div class="card">
+        <h3>Payment Methods (Cash vs Online)</h3>
+        <canvas id="paymentMethodChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle mobile nav
+    document.getElementById("navToggle").onclick = () => {
+      document.getElementById("navLinks").classList.toggle("show");
+    };
+  </script>
+
+  <!-- Firebase + Chart Logic -->
+  <script type="module">
+    import { db } from "./firebase-config.js";
+    import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const revenueTrendCtx = document.getElementById("revenueTrendChart").getContext("2d");
+    const dailyPatientsCtx = document.getElementById("dailyPatientsChart").getContext("2d");
+    const monthlyRevenueCtx = document.getElementById("monthlyRevenueChart").getContext("2d");
+    const monthlyPatientsCtx = document.getElementById("monthlyPatientsChart").getContext("2d");
+    const paymentMethodCtx = document.getElementById("paymentMethodChart").getContext("2d");
+
+    const revenueTrendChart = new Chart(revenueTrendCtx, { 
+      type: "line", 
+      data:{labels:[],datasets:[{label:"Revenue ₹",data:[],borderColor:"#46a0fa",backgroundColor:"rgba(70,160,250,0.2)",fill:true}]}, 
+      options:{responsive:true} 
+    });
+
+    const dailyPatientsChart = new Chart(dailyPatientsCtx, { 
+      type: "bar", 
+      data:{labels:[],datasets:[{label:"Patients",data:[],backgroundColor:"#28a745"}]}, 
+      options:{responsive:true} 
+    });
+
+    const monthlyRevenueChart = new Chart(monthlyRevenueCtx, { 
+      type: "bar", 
+      data:{labels:[],datasets:[{label:"Revenue ₹",data:[],backgroundColor:"#ffc107"}]}, 
+      options:{responsive:true} 
+    });
+
+    const monthlyPatientsChart = new Chart(monthlyPatientsCtx, { 
+      type: "line", 
+      data:{labels:[],datasets:[{label:"Patients",data:[],borderColor:"#3c5754",fill:false}]}, 
+      options:{responsive:true} 
+    });
+
+    // ✅ Updated Payment Pie Chart with Hover Label Tooltips
+    const paymentMethodChart = new Chart(paymentMethodCtx, {
+      type: "pie",
+      data: {
+        labels: ["Cash", "Online"],
+        datasets: [{
+          label: "Payment Methods",
+          data: [0, 0],
+          backgroundColor: ["#28a745", "#46a0fa"],
+          // hoverOffset: 
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              label: function(context) {
+                const label = context.label || "";
+                const value = context.raw || 0;
+                const total = context.chart._metasets[0].total || 1;
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            },
+            backgroundColor: "rgba(255,255,255,0.95)",
+            titleColor: "#000",
+            bodyColor: "#000",
+            borderColor: "#ccc",
+            borderWidth: 1,
+            titleFont: { weight: "bold" },
+            bodyFont: { weight: "500" },
+            displayColors: false,
+            cornerRadius: 8
+          },
+          legend: {
+            labels: {
+              color: "#333",
+              font: { size: 14, weight: "500" }
+            },
+            position: "bottom"
+          }
+        }
+      }
+    });
+
+    // Firestore live updates
+    onSnapshot(collection(db, "patients"), (snapshot) => {
+      const all = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      let cashCount = 0;
+      let onlineCount = 0;
+
+      const today = new Date();
+      const last7Days = [];
+      const dailyRevenueMap = {};
+      const dailyPatientsMap = {};
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const key = d.toISOString().split("T")[0];
+        last7Days.push(key);
+        dailyRevenueMap[key] = 0;
+        dailyPatientsMap[key] = 0;
+      }
+
+      const last6Months = [];
+      const monthlyRevenueMap = {};
+      const monthlyPatientsMap = {};
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        last6Months.push(key);
+        monthlyRevenueMap[key] = 0;
+        monthlyPatientsMap[key] = 0;
+      }
+
+      all.forEach(p => {
+        if (!p.createdAt) return;
+        const d = p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt);
+        const dateKey = d.toISOString().split("T")[0];
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const fee = Number(p.fee) || 0;
+
+        if (last7Days.includes(dateKey)) {
+          dailyPatientsMap[dateKey] += 1;
+          if (p.status === "completed") dailyRevenueMap[dateKey] += fee;
+        }
+
+        if (last6Months.includes(monthKey)) {
+          monthlyPatientsMap[monthKey] += 1;
+          if (p.status === "completed") monthlyRevenueMap[monthKey] += fee;
+        }
+
+        // ✅ Count payment types
+        if (p.payment) {
+          const pay = p.payment.toLowerCase();
+          if (pay === "cash") cashCount++;
+          if (pay === "online") onlineCount++;
+        }
+      });
+
+      revenueTrendChart.data.labels = last7Days;
+      revenueTrendChart.data.datasets[0].data = Object.values(dailyRevenueMap);
+      revenueTrendChart.update();
+
+      dailyPatientsChart.data.labels = last7Days;
+      dailyPatientsChart.data.datasets[0].data = Object.values(dailyPatientsMap);
+      dailyPatientsChart.update();
+
+      monthlyRevenueChart.data.labels = last6Months;
+      monthlyRevenueChart.data.datasets[0].data = Object.values(monthlyRevenueMap);
+      monthlyRevenueChart.update();
+
+      monthlyPatientsChart.data.labels = last6Months;
+      monthlyPatientsChart.data.datasets[0].data = Object.values(monthlyPatientsMap);
+      monthlyPatientsChart.update();
+
+      paymentMethodChart.data.datasets[0].data = [cashCount, onlineCount];
+      paymentMethodChart.update();
+    });
+  </script>
+
+  <footer class="footer">
+    <p>
+      Developed by 
+      <a href="https://unrealsolutions.pages.dev" target="_blank" rel="noopener noreferrer">UnrealSolutions</a> 
+      | Contact: <a href="mailto:info.unrealsolutions@gmail.com">info.unrealsolutions@gmail.com</a> 
+      | +91-7507374446 | +91-9529102559
+    </p>
+  </footer>
+</body>
+</html>
